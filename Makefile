@@ -92,3 +92,9 @@ inspect:
 	docker inspect -f '{{index .ContainerConfig.Labels "git-commit"}}' $(IMAGENAME)
 	docker inspect -f '{{index .ContainerConfig.Labels "git-branch"}}' $(IMAGENAME)
 
+deploy:
+	@echo
+	@echo MARK: deploy template to k8s
+	@echo MARK: specify DOMAINNAME environment variable first
+	#envsubst < k8s-deployment.yml 
+	envsubst < k8s-deployment.yml | kubectl apply -f -
