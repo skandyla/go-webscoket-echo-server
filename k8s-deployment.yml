@@ -38,7 +38,12 @@ metadata:
   labels:
     app: go-websocket-echo-server
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   selector:
     matchLabels:
       app: go-websocket-echo-server
@@ -47,6 +52,16 @@ spec:
       labels:
         app: go-websocket-echo-server
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - go-websocket-echo-server
+            topologyKey: "kubernetes.io/hostname"
       containers:
         - name: go-websocket-echo-server
           image: skandyla/go-websocket-echo-server
@@ -54,3 +69,25 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          env:
+            - name: ALWAYS_CHANGE_VAR
+              value: "${DATE}"
+              #value: "{{ ansible_date_time.epoch }}"
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            #httpGet:
+            #  path: /_service/status
+            #  port: 8080
+            #  scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /_service/info
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 20
+
